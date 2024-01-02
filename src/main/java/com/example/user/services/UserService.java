@@ -3,6 +3,7 @@ package com.example.user.services;
 import com.example.user.models.User;
 import com.example.user.repositories.UserRepositories;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,19 +28,33 @@ public class UserService {
 //        }
         return userRepositories.findById(Id);
     }
-    public User signUp(String email, String password) {
+    public User signUp(String name, String email, String password) {
         Optional<User> userOptional = userRepositories.findByEmail(email);
         if(userOptional.isPresent()) {
             throw new RuntimeException();
         }
         User user = new User();
-        user.setName("Meera");
+        user.setName(name);
         user.setEmail(email);
-        user.setPassword(password);
-//        Date currentDate = new Date();
-//        user.setCreatedDate(currentDate);
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        user.setPassword(bCryptPasswordEncoder.encode(password));
+       // user.setPassword(password);
+
         return userRepositories.save(user);
 
     }
+    public User login(String email, String password){
+        Optional<User> userOptional = userRepositories.findByEmail(email);
+        if(userOptional.isEmpty()){
+            throw new RuntimeException();
+        }
 
+        User user = userOptional.get();
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        if(bCryptPasswordEncoder.matches(password, user.getPassword())){
+            return user;
+        }
+
+        throw new RuntimeException();
+    }
 }
